@@ -1,0 +1,149 @@
+---
+/**
+ * Renders a game image (AVIF/WebP with fallback) or, if the file has not
+ * been added yet, a neutral placeholder with the same aspect ratio so that
+ * swapping in the real asset causes no layout shift.
+ */
+import { Picture } from 'astro:assets';
+import { gameImage } from '../config/assets';
+
+interface Props {
+  src?: string;
+  alt: string;
+  /** CSS aspect ratio, e.g. '16 / 9' or '1 / 1'. */
+  ratio?: string;
+  widths?: number[];
+  sizes?: string;
+  priority?: boolean;
+  placeholderLabel: string;
+  class?: string;
+  variant?: 'frame' | 'icon';
+  /** Muted looping clip (public path). Plays over the image while on screen; skipped with reduced motion. */
+  video?: string;
+}
+
+const {
+  src,
+  alt,
+  ratio = '16 / 9',
+  widths = [480, 800, 1200, 1600],
+  sizes = '100vw',
+  priority = false,
+  placeholderLabel,
+  class: className,
+  variant = 'frame',
+  video,
+} = Astro.props;
+const image = gameImage(src);
+// Never upscale: keep requested widths smaller than the source, plus the source width.
+const usableWidths = image ? [...widths.filter((w) => w < image.width), Math.min(image.width, Math.max(...widths))] : [];
+if (src && !image && import.meta.env.DEV) {
+  console.warn(`[site] image not found: src/assets/games/${src} (showing placeholder)`);
+}
+---
+
+<div class:list={['media', `media--${variant}`, className, { 'media--empty': !image }]} style={`aspect-ratio: ${ratio}`}>
+  {
+    image ? (
+      <Picture
+        src={image}
+        alt={alt}
+        widths={usableWidths}
+        sizes={sizes}
+        formats={['avif', 'webp']}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : 'auto'}
+        decoding="async"
+      />
+    ) : (
+      <div class="media__placeholder" role="img" aria-label={`${alt} — ${placeholderLabel}`}>
+        {variant === 'frame' && (
+          <svg class="media__scribble" viewBox="0 0 120 60" aria-hidden="true">
+            <path d="M8 46 C 24 12, 38 52, 56 24 S 92 10, 112 38" />
+            <circle cx="92" cy="18" r="6" />
+          </svg>
+        )}
+        <span>{variant === 'frame' ? placeholderLabel : ''}</span>
+      </div>
+    )
+  }
+  {video && <video class="media__video" data-src={video} muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" />}
+</div>
+
+<script>
+  // Load/play clips only while visible; never with reduced motion. Without JS the poster image stays.
+  const clips = document.querySelectorAll<HTMLVideoElement>('video.media__video');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (clips.length && !reduce && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const v = e.target as HTMLVideoElement;
+          if (e.isIntersecting) {
+            if (!v.src) v.src = v.dataset.src ?? '';
+            v.play().then(() => v.classList.add('is-playing')).catch(() => {});
+          } else {
+            v.pause();
+          }
+        }
+      },
+      { rootMargin: '200px 0px' },
+    );
+    clips.forEach((v) => io.observe(v));
+  }
+</script>
+
+<style>
+  .media {
+    position: relative;
+    overflow: hidden;
+    background: var(--c-surface-2);
+    width: 100%;
+  }
+  .media--frame {
+    border: 2px solid var(--c-line);
+    border-radius: var(--r-sketch);
+  }
+  .media--icon {
+    border-radius: 22%;
+    border: 1px solid var(--c-line);
+  }
+  .media :global(picture),
+  .media :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .media__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .media__video.is-playing {
+    opacity: 1;
+  }
+  .media__placeholder {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.5rem;
+    color: var(--c-muted);
+    font-size: 0.875rem;
+    background-image: repeating-linear-gradient(-45deg, transparent 0 14px, rgb(255 255 255 / 0.025) 14px 15px);
+  }
+  .media__scribble {
+    width: min(30%, 120px);
+    fill: none;
+    stroke: var(--c-muted);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    opacity: 0.6;
+  }
+</style>
