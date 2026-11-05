@@ -39,6 +39,9 @@ export const site = {
   xHandle: '@your_x_handle' as string | null,
   /** Shown in footer only when set. e.g. 'mailto:you@example.com' or a form URL. */
   contactUrl: null as string | null,
+  /** Optional footer link (e.g. your press kit, or credit to this template). null hides it.
+   *  Example: { url: 'https://github.com/katapote/indie-game-site-template', label: { en: 'Site template', ja: 'サイトのテンプレート' } } */
+  footerLink: null as { url: string; label: Localized } | null,
   developer: {
     name: { en: 'Your Name', ja: 'あなたの名前' } satisfies Localized,
     bio: {
