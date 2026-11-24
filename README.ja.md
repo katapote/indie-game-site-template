@@ -6,7 +6,9 @@
 [English README](README.md)
 
 - **メインのゲーム1本**：大きな画像、「プレイテストに参加」ボタン（TestFlight）、プレイ動画ボタン（任意）、特徴カード3枚（画像またはループ動画）
-- **ほかの作品**：App Storeボタン付きのカードで一覧表示
+- **配信後は「App Storeでダウンロード」ボタン**（プレイテストのボタンは2番目に）
+- **ほかの作品**：App Storeボタン付きのカードで一覧表示。プレイ動画も載せられます（パソコンはカーソルを合わせると、スマホは画面に映ると再生）
+- **❤️ いいね＋スタンプ**（やってみたい・面白そう・遊んだよ・続編希望）。無料のCloudflare D1に保存し、押した人をApp Storeのレビューへ案内
 - **日本語と英語**のページ。日本語のブラウザで開くと自動で日本語ページへ
 - **Xでリンクを貼ったときのカード画像**を、キービジュアルから自動生成
 - **ボタンのクリック数を計測**（任意。Plausible / GA4 / Zaraz に対応。Xのどこから来たかも分かる）
@@ -56,6 +58,8 @@
 
 **Xのカード画像**：キービジュアルを入れたら `npm run og` を実行し、できた `public/og/og-default.png` をコミットします。
 
+**カードの動画**：その他の作品のゲームに `preview: { image: '<id>/preview.png', video: '/media/<id>/preview.mp4' }` を書くと、カードの上部に動画が出ます（縦長の動画は `fit: 'contain'` を追加）。動画があるカードは自動で上に並びます。
+
 ## 4. Cloudflare Pagesで公開する（無料・10分）
 
 1. Cloudflareのダッシュボード → Workers & Pages → Create → **Pages** を選びます（Workersの画面になったら「Continue to Pages」）→ Connect to Git → コピーしたリポジトリを選択。
@@ -68,6 +72,17 @@
    - `SITE_URL` = 公開URL（例：`https://my-games.pages.dev`）**必須**。Project nameと合わせてください。
    - `NODE_VERSION` = `22.23.4`
 4. 「Save and Deploy」を押します。以後は `main` を更新するたびに自動で公開し直されます。
+
+## 4-2. いいね・スタンプをオンにする（任意・無料・5分）
+
+ボタンの種類は `src/config/reactions.ts` で変えられます。データベースをつなぐまでは表示されません。
+
+1. Cloudflare →「Storage & databases」→「D1」→「Create database」（名前は自由）
+2. 作ったデータベースの「Console」に `migrations/0001_reactions.sql` の中身を貼って実行
+3. Workers & Pages → 自分のプロジェクト →「Settings」→「Bindings」→「Add」→「D1 database」：Variable name に `DB`、データベースを選んで保存
+4. 「Deployments」→ 一番上の「…」→「Retry deployment」
+
+押された数は10を超えるまで表示しません。同じ人は同じボタンを1回だけ、1日40回まで押せます（IPアドレスは元に戻せない形で扱い、そのものは保存しません）。プライバシーポリシーにも自動で追記されます。不要なら `enabled: false` にしてください。
 
 ## 5. Xのプロフィールに載せる
 

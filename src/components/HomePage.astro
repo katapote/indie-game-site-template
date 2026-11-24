@@ -7,6 +7,7 @@ import Hero from './Hero.astro';
 import Features from './Features.astro';
 import Works from './Works.astro';
 import About from './About.astro';
+import Reactions from './Reactions.astro';
 
 interface Props {
   locale: Locale;
@@ -14,28 +15,50 @@ interface Props {
 const { locale } = Astro.props;
 const t = useT(locale);
 const testFlight = featuredGame.testFlight?.url ? featuredGame.testFlight : null;
+const appStore = featuredGame.appStore?.url ? featuredGame.appStore : null;
 ---
 
 <Base locale={locale} path="/" autoLanguage={locale === 'en'}>
   <Hero game={featuredGame} locale={locale} />
   <Features features={featuredGame.features ?? []} locale={locale} />
   {
-    testFlight && (
+    (appStore || testFlight) && (
       <div class="container repeat-cta">
-        <a class="btn btn--primary" href={testFlight.url} target="_blank" rel="noopener" data-track={testFlight.event} data-track-location="features">
-          {t('cta.playtest')}
-          <span class="sr-only">{t('newTab')}</span>
-        </a>
+        {appStore && (
+          <a class="btn btn--primary" href={appStore.url} target="_blank" rel="noopener" data-track={appStore.event} data-track-location="features">
+            {t('cta.download')}
+            <span class="sr-only">{t('newTab')}</span>
+          </a>
+        )}
+        {testFlight && (
+          <a class:list={['btn', appStore ? 'btn--ghost' : 'btn--primary']} href={testFlight.url} target="_blank" rel="noopener" data-track={testFlight.event} data-track-location="features">
+            {t('cta.playtest')}
+            <span class="sr-only">{t('newTab')}</span>
+          </a>
+        )}
       </div>
     )
   }
+  <div class="container featured-reactions">
+    <Reactions game={featuredGame} locale={locale} />
+  </div>
   <Works games={otherGames} locale={locale} />
   <About locale={locale} />
 </Base>
 
 <style>
+  .featured-reactions {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+  }
+  .featured-reactions :global(.reactions__list) {
+    justify-content: center;
+  }
   .repeat-cta {
     display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     justify-content: center;
     padding-bottom: 1rem;
   }

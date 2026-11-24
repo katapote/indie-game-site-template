@@ -8,7 +8,11 @@ generic portfolio.
 
 - **One featured game** with a hero, "Join the Playtest" (TestFlight) button,
   optional gameplay video and three feature cards (images or looping clips)
-- **Your other games** as cards with App Store buttons
+- **Download on the App Store** button once your game is released (playtest stays as a second button)
+- **Your other games** as cards with App Store buttons and optional preview clips
+  (play on hover with a mouse, while on screen on phones)
+- **❤️ + quick stamps** ("Want to play", "Looks fun", …) on every game, backed by a free
+  Cloudflare D1 database, with a nudge to write an App Store review
 - **English + Japanese** pages, auto-switch for Japanese browsers
 - **X-ready share card** (OG image generated from your key visual)
 - **Click tracking with UTM / X attribution** (Plausible, GA4 or Zaraz — optional)
@@ -80,6 +84,10 @@ visitors' browsers don't show the cached old one.
 **Share card.** After adding the key visual, run `npm run og` and commit
 `public/og/og-default.png`. It also renders the favicons from `public/favicon.svg`.
 
+**Card previews.** For a game in "other games", add
+`preview: { image: '<id>/preview.png', video: '/media/<id>/preview.mp4' }` (add
+`fit: 'contain'` for portrait clips). Cards with a clip are listed first automatically.
+
 ## 4. Publish on Cloudflare Pages (free, 10 min)
 
 1. Cloudflare dashboard → Workers & Pages → Create → **Pages** (use "Continue to
@@ -97,6 +105,21 @@ visitors' browsers don't show the cached old one.
 
 Any static host works (`npm run build` → upload `dist/`); `public/_headers` is
 Cloudflare/Netlify syntax.
+
+## 4b. Turn on reactions (optional, free, 5 min)
+
+Buttons (❤️ Like, Want to play, Looks fun, Played it, Want a sequel) are defined in
+`src/config/reactions.ts`. They stay hidden until a database is connected:
+
+1. Cloudflare → Storage & databases → D1 → **Create database** (any name).
+2. Open it → **Console** → paste `migrations/0001_reactions.sql` → Execute.
+3. Workers & Pages → your project → Settings → **Bindings** → Add → D1 database:
+   variable name `DB`, pick the database.
+4. Deployments → latest → **Retry deployment**.
+
+Counts appear once a button reaches 10 presses (`showCountFrom`). One press per visitor
+per button (salted IP hash, the IP itself is not stored), 40 per visitor per day. The
+privacy policy section is added automatically. Set `enabled: false` to remove the buttons.
 
 ## 5. Link it from X
 

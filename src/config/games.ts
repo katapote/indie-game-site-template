@@ -31,6 +31,9 @@ export const games: Game[] = [
     keyVisual: 'my-game/key-visual.png', // 16:9 recommended
     keyVisualAlt: { en: 'My Game key visual', ja: 'マイゲームのキービジュアル' },
     icon: 'my-game/icon.png', // square
+    // Once released: add appStore to show a primary "Download on the App Store" button
+    // (the playtest button then becomes secondary).
+    // appStore: { url: 'https://apps.apple.com/app/id1234567890', event: 'click_mygame_appstore' },
     // TODO: your TestFlight public link. Set url to null to hide the playtest button.
     testFlight: {
       url: 'https://testflight.apple.com/join/XXXXXXXX',
@@ -68,6 +71,9 @@ export const games: Game[] = [
     title: { en: 'Second Game', ja: 'セカンドゲーム' },
     tagline: { en: 'Your App Store subtitle works well here.', ja: 'App Storeのサブタイトルがそのまま使えます。' },
     icon: 'second-game/icon.png',
+    // Optional card preview: plays on hover (mouse) / while on screen (touch).
+    // preview: { image: 'second-game/preview.png', video: '/media/second-game/preview.mp4' },
+    // Portrait clip? add fit: 'contain'.
     // TODO: e.g. https://apps.apple.com/app/id1234567890 (null shows "Store link coming soon")
     appStore: { url: null, event: 'click_secondgame_appstore' },
   },
@@ -83,4 +89,8 @@ export const games: Game[] = [
 
 export const sortedGames = [...games].sort((a, b) => a.order - b.order);
 export const featuredGame = sortedGames.find((g) => g.featured) ?? sortedGames[0]!;
-export const otherGames = sortedGames.filter((g) => g !== featuredGame);
+/** "Other games": cards with a preview clip come first, then the rest; `order` decides within each group. */
+const hasClip = (g: (typeof games)[number]) => (g.preview?.video ? 1 : 0);
+export const otherGames = sortedGames
+  .filter((g) => g !== featuredGame)
+  .sort((a, b) => hasClip(b) - hasClip(a) || a.order - b.order);
